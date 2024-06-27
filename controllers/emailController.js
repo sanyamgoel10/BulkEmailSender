@@ -8,23 +8,50 @@ if (typeof config.senderEmail != 'string' || typeof config.senderPassword != 'st
 
 exports.sendEmails = async (req, res) => {
     try {
-        if (typeof req.body.ReceiverDetails !== 'object' || !Array.isArray(req.body.ReceiverDetails)) {
+        if (typeof req.body.TemplateId == 'undefined') {
+            return res.status(400).send("Invalid TemplateId");
+        }
+        if (typeof req.body.ReceiverDetails != 'object') {
             return res.status(400).send("Invalid ReceiverDetails");
         }
-        if (typeof req.body.Subject !== 'string') {
-            return res.status(400).send("Invalid Subject");
+        const userList = req.body.ReceiverDetails;
+        if('undefined' == typeof userList.name || 'undefined' == typeof userList.email || !Array.isArray(userList.name) || !Array.isArray(userList.email)){
+            return res.status(400).send("Invalid name, email in ReceiverDetails");
+        }
+        if(userList.name.length != userList.email.length){
+            return res.status(400).send("Arrays length do not match");
         }
         
         let emailSent = [], emailNotSent = [];
-        for (const receiver of req.body.ReceiverDetails) {
-            if('string' == typeof receiver.Email && 'string' == typeof receiver.Name){
-                await sendEmail(receiver.Email, receiver.Name, req.body.Subject);
-                console.log('Email sent to:', receiver.Name, 'on EmailId:', receiver.Email);
-                emailSent.push(receiver);
+
+        for(let i=0; i<userList.name.length; i++){
+            let currName = userList.name[i];
+            let currEmail = userList.email[i];
+
+            if('string' == typeof currEmail){
+                let reqObjArr = {
+                    name: currName,
+                    email: currEmail
+                };
+                Object.keys(userList).forEach((elem) => {
+                    if(elem != 'name' && elem != 'email'){
+                        if(!Array.isArray(userList[elem]) || userList[elem].length != userList.name.length){
+                            return res.status(400).send("Arrays length do not match");
+                        }
+                        reqObjArr[elem] = userList[elem][i];
+                    }
+                });
+                if(!(await sendEmail(reqObjArr, req.body.TemplateId))){
+                    emailNotSent.push({Email: currEmail, Name: currName});
+                }else{
+                    console.log('Email sent to:', currName, 'on EmailId:', currEmail);
+                    emailSent.push({Email: currEmail, Name: currName});
+                }                
             }else{
-                emailNotSent.push(receiver);
-            }            
+                emailNotSent.push({Email: currEmail, Name: currName});
+            }
         }
+
         res.send({
             Success: emailSent,
             Failed: emailNotSent
@@ -48,13 +75,22 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send an email
-const sendEmail = async (rEmail, rName, emailSubject) => {
-    const mailOptions = {
-        from: config.senderEmail,
-        to: rEmail,
-        subject: emailSubject,
-        html: `<body>Hi ${rName},<br><br> This is to inform you that a test email from cron is sent to you.</body>`
-    };
-
-    return await transporter.sendMail(mailOptions);
+const sendEmail = async (receiverDetails, templateId) => {
+    if(config.emailTemplate[templateId] && config.emailTemplate[templateId].subject && config.emailTemplate[templateId].body){
+        let emailSubject = config.emailTemplate[templateId].subject;
+        let emailBody = config.emailTemplate[templateId].body;
+        Object.keys(receiverDetails).forEach((elem) => {
+            emailSubject.replaceAll('[['+elem+']]', receiverDetails.elem);
+            emailBody.replaceAll('[['+elem+']]', receiverDetails.elem);
+        })
+        const mailOptions = {
+            from: config.senderEmail,
+            to: receiverDetails.email,
+            subject: emailSubject,
+            text: emailBody
+        };
+        return await transporter.sendMail(mailOptions);
+    }
+    console.log('TemplateId not found');
+    return false; 
 };
