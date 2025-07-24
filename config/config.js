@@ -4,6 +4,7 @@ module.exports = {
     port: process.env.PORT,
 
     senderEmail: process.env.SENDER_EMAIL,
+    senderName: process.env.SENDER_NAME,
     senderPassword: process.env.SENDER_PASSWORD,
 
     emailTemplateList: {

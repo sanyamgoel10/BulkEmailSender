@@ -75,7 +75,7 @@ class EmailController {
                         currBody = currBody.replaceAll(`[[${elem}]]`, userList[elem][i]);
                     }
                 }
-                let emailSentResponse = await EmailService.sendEmail(currEmail, currSubject, currBody);
+                let emailSentResponse = await EmailService.sendEmail(currEmail, (UtilService.checkValidArray(userList.name) ? userList.name[i] : false), currSubject, currBody);
                 if (!emailSentResponse) {
                     emailNotSent.push({
                         Index: i,
