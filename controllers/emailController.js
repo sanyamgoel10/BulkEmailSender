@@ -1,91 +1,112 @@
-const nodemailer = require('nodemailer');
-const config = require('../config');
+const { emailTemplateList } = require('../config/config.js');
+const UtilService = require('../services/utilService.js');
+const EmailService = require('../services/emailService.js');
 
-if (typeof config.senderEmail != 'string' || typeof config.senderPassword != 'string') {
-    console.error("Config variables not found");
-    process.exit(1);
-}
-
-exports.sendMultipleEmails = async (req, res) => {
-    try {
-        if (typeof req.body.TemplateId == 'undefined') {
-            return res.status(400).send("Invalid TemplateId");
-        } 
-        if (typeof req.body.ReceiverDetails != 'object') {
-            return res.status(400).send("Invalid ReceiverDetails");
-        }
-
-        const templateId = req.body.TemplateId;
-        const userList = req.body.ReceiverDetails;
-
-        if('undefined' == typeof userList.email || !Array.isArray(userList.email)){
-            return res.status(400).send("Invalid email in ReceiverDetails");
-        }
-
-        for(let elem of Object.keys(userList)){
-            if(!Array.isArray(userList[elem]) || userList[elem].length != userList['email'].length){
-                return res.status(400).send("Arrays length do not match in ReceiverDetails");
+class EmailController {
+    async sendMultipleEmails(req, res) {
+        try {
+            if (!UtilService.checkValidObject(req.body)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'Invalid body'
+                });
             }
-        }
-        
-        let emailSent = [], emailNotSent = [];
 
-        if(config.emailTemplate[templateId] && config.emailTemplate[templateId].subject && config.emailTemplate[templateId].body){
-            const emailSubject = config.emailTemplate[templateId].subject;
-            const emailBody = config.emailTemplate[templateId].body;
-            for(let i=0; i<userList.email.length; i++){
-                const currEmail = userList.email[i];
-                if('string' == typeof currEmail && (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).test(currEmail)){
-                    let currSubject = emailSubject, currBody = emailBody;
-                    for(let elem of Object.keys(userList)){
-                        currSubject = currSubject.replaceAll('[['+elem+']]', userList[elem][i]);
-                        currBody = currBody.replaceAll('[['+elem+']]', userList[elem][i]);
-                    }
-                    if(await sendEmail(currEmail, currSubject, currBody)){
-                        console.log("Email sent to : ", currEmail);
-                        emailSent.push(currEmail);
-                    }else{
-                        emailNotSent.push(currEmail);
-                    }
-                }else{
-                    emailNotSent.push(currEmail);
+            if (!UtilService.checkValidString(req.body.TemplateId)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'Invalid TemplateId'
+                });
+            }
+
+            if (!emailTemplateList[req.body.TemplateId] || !UtilService.checkValidObject(emailTemplateList[req.body.TemplateId]) || !UtilService.checkValidString(emailTemplateList[req.body.TemplateId].subject) || !UtilService.checkValidString(emailTemplateList[req.body.TemplateId].body)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'TemplateId not found'
+                });
+            }
+
+            const templateId = req.body.TemplateId;
+
+            const emailSubject = emailTemplateList[templateId].subject;
+            const emailBody = emailTemplateList[templateId].body;
+
+            if (!UtilService.checkValidObject(req.body.ReceiverDetails)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'Invalid ReceiverDetails'
+                });
+            }
+            const userList = req.body.ReceiverDetails;
+
+            if (!UtilService.checkValidArray(userList.email)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'Invalid email in ReceiverDetails'
+                });
+            }
+
+            for (let elem of Object.keys(userList)) {
+                if (!UtilService.checkValidArray(userList[elem]) || userList[elem].length != userList.email.length) {
+                    return res.status(400).json({
+                        status: 0,
+                        msg: 'Invalid values in ReceiverDetails'
+                    });
                 }
             }
-            return res.send({Success: emailSent, Failed: emailNotSent});
-        }else{
-            return res.status(400).send("TemplateId not found.");
+
+            let emailSent = [], emailNotSent = [];
+
+            for (let i = 0; i < userList.email.length; i++) {
+                let currEmail = userList.email[i];
+                let currSubject = emailSubject;
+                let currBody = emailBody;
+                if (!UtilService.checkValidEmailId(currEmail)) {
+                    emailNotSent.push({
+                        Index: i,
+                        Email: currEmail,
+                        Reason: 'Invalid EmailId'
+                    });
+                    continue;
+                }
+                for (let elem of Object.keys(userList)) {
+                    if (elem != 'email') {
+                        currSubject = currSubject.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                        currBody = currBody.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                    }
+                }
+                let emailSentResponse = await EmailService.sendEmail(currEmail, currSubject, currBody);
+                if (!emailSentResponse) {
+                    emailNotSent.push({
+                        Index: i,
+                        Email: currEmail,
+                        Reason: 'EmailService error'
+                    });
+                    continue;
+                }
+                emailSent.push({
+                    Index: i,
+                    Email: currEmail
+                });
+            }
+
+            return res.status(200).json({
+                status: 1,
+                msg: {
+                    SuccessCount: emailSent.length,
+                    FailureCount: emailNotSent.length,
+                    SuccessEmail: emailSent,
+                    FailedEmails: emailNotSent,
+                }
+            });
+        } catch (error) {
+            console.log('Error in EmailController.sendMultipleEmails: ', error);
+            return res.status(500).json({
+                status: 0,
+                msg: 'Server Error'
+            });
         }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).send("Failed to send email.");
     }
-};
+}
 
-// Create a SMTP connection with Google using credentials
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-        user: config.senderEmail,
-        pass: config.senderPassword
-    }
-});
-
-// Function to send an email
-const sendEmail = async (receiverEmail, emailSubject, emailBody) => {
-    const mailOptions = {
-        from: config.senderEmail,
-        to: receiverEmail,
-        subject: emailSubject,
-        text: emailBody
-    };
-    try {
-        await transporter.sendMail(mailOptions);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
-};
+module.exports = new EmailController();

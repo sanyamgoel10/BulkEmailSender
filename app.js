@@ -1,18 +1,21 @@
-const express = require('express');
-const config = require('./config');
-const emailRoutes = require('./routes/emailRoutes');
+const config = require('./config/config.js');
 
+const express = require('express');
 const app = express();
+
+const emailRoutes = require('./routes/emailRoutes.js');
 
 app.use(express.json());
 
-if ('undefined' == typeof config.port) {
-    console.error("Config variables not found");
-    process.exit(1);
-}
+app.use('/api', emailRoutes);
 
-app.use('/', emailRoutes);
+app.use((req, res) => {
+    return res.status(404).json({
+        status: 0,
+        msg: 'Invalid Endpoint'
+    });
+});
 
 app.listen(config.port, () => {
-    console.log(`Server is running on http://localhost:${config.port}`);
+    console.log('Server is running on port: ', config.port);
 });
