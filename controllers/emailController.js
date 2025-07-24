@@ -86,6 +86,8 @@ class EmailController {
                 }
             } else if (UtilService.checkValidArray(req.body.ReceiverDetails) && req.body.ReceiverDetails.length > 0) {
                 const userList = req.body.ReceiverDetails;
+                let allEmailReq = [];
+                let allEmailMeta = [];
                 for (let i = 0; i < userList.length; i++) {
                     let currObj = userList[i];
                     if (!UtilService.checkValidEmailId(currObj.email)) {
@@ -105,18 +107,22 @@ class EmailController {
                             currBody = currBody.replaceAll(`[[${elem}]]`, userList[i][elem]);
                         }
                     }
-                    let emailSentResponse = await EmailService.sendEmail(currEmail, currName, currSubject, currBody);
-                    if (!emailSentResponse) {
+                    allEmailReq.push(EmailService.sendEmail(currEmail, currName, currSubject, currBody));
+                    allEmailMeta.push(currEmail);
+                }
+                let allEmailResp = await Promise.all(allEmailReq);
+                for (let i = 0; i < allEmailResp.length; i++) {
+                    if (!allEmailResp[i]) {
                         emailNotSent.push({
                             Index: i,
-                            Email: currEmail,
+                            Email: allEmailMeta[i],
                             Reason: 'EmailService error'
                         });
                         continue;
                     }
                     emailSent.push({
                         Index: i,
-                        Email: currEmail
+                        Email: allEmailMeta[i]
                     });
                 }
             } else {
