@@ -64,7 +64,7 @@ class EmailService {
 
     async readExcelFileAndSendEmail(){
         try{
-            const filePath = path.join(__dirname, '..', 'sample_file.xls');
+            const filePath = path.join(__dirname, '..', 'sample_file1.xls');
             const workbook = xlsx.readFile(filePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
@@ -115,7 +115,7 @@ class EmailService {
             }
 
             return true;
-        }catch(e){
+        }catch(error){
             console.log('Error in EmailService.readExcelFileAndSendEmail: ', error);
             return false;
         }
