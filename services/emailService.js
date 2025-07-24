@@ -64,7 +64,7 @@ class EmailService {
 
     async readExcelFileAndSendEmail(){
         try{
-            const filePath = path.join(__dirname, '..', 'sample_file1.xls');
+            const filePath = path.join(__dirname, '..', 'sample_file_1.xls');
             const workbook = xlsx.readFile(filePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
