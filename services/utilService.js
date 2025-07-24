@@ -18,6 +18,18 @@ class UtilService {
     checkValidEmailId(inpVal) {
         return this.checkValidString(inpVal) && (/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).test(inpVal);
     }
+
+    capitalizeEachWord(sentence) {
+        const words = sentence.split(' ');
+        const capitalizedWords = words.map(word => {
+            if (word.length === 0) {
+                return '';
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        });
+        return capitalizedWords.join(' ');
+    }
+
 }
 
 module.exports = new UtilService();

@@ -150,9 +150,9 @@ class EmailController {
         }
     }
 
-    async readExcelFile(req, res) {
+    async readExcelFileAndSendEmail(req, res) {
         try {
-            let x = await EmailService.readExcelFile();
+            await EmailService.readExcelFileAndSendEmail();
 
             return res.status(200).json({
                 status: 1,

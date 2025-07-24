@@ -1,4 +1,4 @@
-const { senderEmail, senderName, senderPassword } = require('../config/config.js');
+const { senderEmail, senderName, senderPassword, emailTemplateList } = require('../config/config.js');
 
 const nodemailer = require('nodemailer');
 const xlsx = require('xlsx');
@@ -62,7 +62,7 @@ class EmailService {
         }
     }
 
-    async readExcelFile(){
+    async readExcelFileAndSendEmail(){
         try{
             const filePath = path.join(__dirname, '..', 'sample_file.xls');
             const workbook = xlsx.readFile(filePath);
@@ -70,10 +70,53 @@ class EmailService {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
-            console.log("jsonData: ", jsonData);
+            if(UtilService.checkValidArray(jsonData) && jsonData.length > 0){
+                let allEmailReq = [];
+                let allEmailMeta = [];
+                for(let currRecord of jsonData){
+                    if(!UtilService.checkValidEmailId(currRecord['Email'])){
+                        continue;
+                    }
+
+                    let currEmail = currRecord['Email'];
+                    let currName = UtilService.checkValidString(currRecord['Person Name']) ? UtilService.capitalizeEachWord(currRecord['Person Name']) : false;
+                    let currCompany = UtilService.checkValidString(currRecord['Company']) ? currRecord['Company'] : false;
+                    let currSerialNo = UtilService.checkValidString(currRecord['Sr. No.']) ? currRecord['Sr. No.'] : false;
+
+                    let emailSubject = emailTemplateList['sample_email_template_id'].subject;
+                    let emailBody = emailTemplateList['sample_email_template_id'].body;
+
+                    emailSubject = emailSubject.replaceAll(`[[email]]`, currEmail);
+                    if(currName){
+                        emailSubject = emailSubject.replaceAll(`[[name]]`, currName);
+                    }
+                    if(currCompany){
+                        emailSubject = emailSubject.replaceAll(`[[company]]`, currCompany);
+                    }
+
+                    emailBody = emailBody.replaceAll(`[[email]]`, currEmail);
+                    if(currName){
+                        emailBody = emailBody.replaceAll(`[[name]]`, currName);
+                    }
+                    if(currCompany){
+                        emailBody = emailBody.replaceAll(`[[company]]`, currCompany);
+                    }
+
+                    allEmailReq.push(this.sendEmail(currEmail, currName, emailSubject, emailBody));
+                    allEmailMeta.push({
+                        SrNo: currSerialNo,
+                        Email: currEmail
+                    });
+                }
+                let allEmailResp = await Promise.all(allEmailReq);
+                for (let i = 0; i < allEmailResp.length; i++) {
+                    console.log("SrlNo: ", allEmailMeta[i].SrNo, " | ", "Email: ", allEmailMeta[i].Email, " | ", "Email Response: ", allEmailResp[i]);
+                }
+            }
+
             return true;
         }catch(e){
-            console.log('Error in EmailService.readExcelFile: ', error);
+            console.log('Error in EmailService.readExcelFileAndSendEmail: ', error);
             return false;
         }
     }
