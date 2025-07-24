@@ -152,6 +152,8 @@ class EmailController {
 
     async readExcelFile(req, res) {
         try {
+            let x = await EmailService.readExcelFile();
+
             return res.status(200).json({
                 status: 1,
                 msg: 'Success read excel file'

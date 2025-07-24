@@ -1,6 +1,9 @@
 const { senderEmail, senderName, senderPassword } = require('../config/config.js');
 
 const nodemailer = require('nodemailer');
+const xlsx = require('xlsx');
+const path = require('path');
+
 const UtilService = require('./utilService.js');
 
 class EmailService {
@@ -55,6 +58,22 @@ class EmailService {
             return true;
         } catch (error) {
             console.log('Error in EmailService.sendEmail: ', error);
+            return false;
+        }
+    }
+
+    async readExcelFile(){
+        try{
+            const filePath = path.join(__dirname, '..', 'sample_file.xls');
+            const workbook = xlsx.readFile(filePath);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+            console.log("jsonData: ", jsonData);
+            return true;
+        }catch(e){
+            console.log('Error in EmailService.readExcelFile: ', error);
             return false;
         }
     }
