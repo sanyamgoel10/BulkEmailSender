@@ -4,5 +4,6 @@ const router = express.Router();
 const EmailController = require('../controllers/emailController.js');
 
 router.post('/sendMultipleEmails', EmailController.sendMultipleEmails);
+router.post('/readExcelFile', EmailController.readExcelFile);
 
 module.exports = router;

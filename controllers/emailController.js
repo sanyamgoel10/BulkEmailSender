@@ -149,6 +149,21 @@ class EmailController {
             });
         }
     }
+
+    async readExcelFile(req, res) {
+        try {
+            return res.status(200).json({
+                status: 1,
+                msg: 'Success read excel file'
+            })
+        } catch (error) {
+            console.log('Error in EmailController.readExcelFile: ', error);
+            return res.status(500).json({
+                status: 0,
+                msg: 'Server Error'
+            });
+        }
+    }
 }
 
 module.exports = new EmailController();
