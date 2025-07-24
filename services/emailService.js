@@ -110,7 +110,7 @@ class EmailService {
                 }
                 let allEmailResp = await Promise.all(allEmailReq);
                 for (let i = 0; i < allEmailResp.length; i++) {
-                    console.log("SrlNo: ", allEmailMeta[i].SrNo, " | ", "Email: ", allEmailMeta[i].Email, " | ", "Email Response: ", allEmailResp[i]);
+                    console.log("SrlNo: ", allEmailMeta[i].SrNo, " |||| ", "EmailId: ", allEmailMeta[i].Email, " |||| ", "EmailResponse: ", allEmailResp[i]);
                 }
             }
 
