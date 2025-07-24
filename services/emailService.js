@@ -47,7 +47,7 @@ class EmailService {
 
             const mailInfo = await transporter.sendMail(options);
 
-            // console.log("Message sent: %s", mailInfo.messageId);
+            console.log("Message sent: %s", mailInfo.messageId);
             // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(mailInfo));
 
             return true;
