@@ -80,8 +80,8 @@ class EmailService {
 
                     let currEmail = currRecord['Email'];
                     let currName = UtilService.checkValidString(currRecord['Person Name']) ? UtilService.capitalizeEachWord(currRecord['Person Name']) : false;
-                    let currCompany = UtilService.checkValidString(currRecord['Company']) ? currRecord['Company'] : false;
-                    let currSerialNo = UtilService.checkValidString(currRecord['Sr. No.']) ? currRecord['Sr. No.'] : false;
+                    let currCompany = UtilService.checkValidString(currRecord['Company']) ? UtilService.capitalizeEachWord(currRecord['Company']) : false;
+                    let currSerialNo = 'undefined' != typeof currRecord['Sr. No.'] ? currRecord['Sr. No.'] : false;
 
                     let emailSubject = emailTemplateList['sample_email_template_id'].subject;
                     let emailBody = emailTemplateList['sample_email_template_id'].body;
