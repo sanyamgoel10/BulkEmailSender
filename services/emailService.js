@@ -62,19 +62,19 @@ class EmailService {
         }
     }
 
-    async readExcelFileAndSendEmail(){
-        try{
+    async readExcelFileAndSendEmail() {
+        try {
             const filePath = path.join(__dirname, '..', 'sample_file_1.xls');
             const workbook = xlsx.readFile(filePath);
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
-            if(UtilService.checkValidArray(jsonData) && jsonData.length > 0){
+            if (UtilService.checkValidArray(jsonData) && jsonData.length > 0) {
                 let allEmailReq = [];
                 let allEmailMeta = [];
-                for(let currRecord of jsonData){
-                    if(!UtilService.checkValidEmailId(currRecord['Email'])){
+                for (let currRecord of jsonData) {
+                    if (!UtilService.checkValidEmailId(currRecord['Email'])) {
                         continue;
                     }
 
@@ -87,18 +87,18 @@ class EmailService {
                     let emailBody = emailTemplateList['sample_email_template_id'].body;
 
                     emailSubject = emailSubject.replaceAll(`[[email]]`, currEmail);
-                    if(currName){
+                    if (currName) {
                         emailSubject = emailSubject.replaceAll(`[[name]]`, currName);
                     }
-                    if(currCompany){
+                    if (currCompany) {
                         emailSubject = emailSubject.replaceAll(`[[company]]`, currCompany);
                     }
 
                     emailBody = emailBody.replaceAll(`[[email]]`, currEmail);
-                    if(currName){
+                    if (currName) {
                         emailBody = emailBody.replaceAll(`[[name]]`, currName);
                     }
-                    if(currCompany){
+                    if (currCompany) {
                         emailBody = emailBody.replaceAll(`[[company]]`, currCompany);
                     }
 
@@ -115,9 +115,112 @@ class EmailService {
             }
 
             return true;
-        }catch(error){
+        } catch (error) {
             console.log('Error in EmailService.readExcelFileAndSendEmail: ', error);
             return false;
+        }
+    }
+
+    async parseJsonOfArraysAndSendEmailsSync(emailSubject, emailBody, userList) {
+        let emailSent = [];
+        let emailNotSent = [];
+
+        if (!UtilService.checkValidArray(userList.email)) {
+            return {
+                status: 0,
+                msg: 'Invalid email in ReceiverDetails'
+            };
+        }
+
+        for (let elem of Object.keys(userList)) {
+            if (!UtilService.checkValidArray(userList[elem]) || userList[elem].length != userList.email.length) {
+                return {
+                    status: 0,
+                    msg: 'Invalid values in ReceiverDetails'
+                };
+            }
+        }
+
+        for (let i = 0; i < userList.email.length; i++) {
+            let currEmail = userList.email[i];
+            let currSubject = emailSubject;
+            let currBody = emailBody;
+            if (!UtilService.checkValidEmailId(currEmail)) {
+                emailNotSent.push({
+                    Index: i,
+                    Email: currEmail,
+                    Reason: 'Invalid EmailId'
+                });
+                continue;
+            }
+            for (let elem of Object.keys(userList)) {
+                if (elem != 'email') {
+                    currSubject = currSubject.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                    currBody = currBody.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                }
+            }
+            let emailSentResponse = await this.sendEmail(currEmail, (UtilService.checkValidArray(userList.name) ? userList.name[i] : false), currSubject, currBody);
+            if (!emailSentResponse) {
+                emailNotSent.push({
+                    Index: i,
+                    Email: currEmail,
+                    Reason: 'EmailService error'
+                });
+                continue;
+            }
+            emailSent.push({
+                Index: i,
+                Email: currEmail
+            });
+        }
+
+        return {
+            status: 1,
+            emailSent,
+            emailNotSent
+        };
+    }
+
+    async parseArrayOfJsonsAndSendEmailsSync(emailSubject, emailBody, userList) {
+        let emailSent = [];
+        let emailNotSent = [];
+        for (let i = 0; i < userList.length; i++) {
+            let currObj = userList[i];
+            if (!UtilService.checkValidEmailId(currObj.email)) {
+                emailNotSent.push({
+                    Index: i,
+                    Reason: 'Invalid email in ReceiverDetails'
+                });
+                continue;
+            }
+            let currEmail = userList[i].email;
+            let currSubject = emailSubject;
+            let currBody = emailBody;
+            let currName = UtilService.checkValidString(userList[i].name) ? userList[i].name : false;
+            for (let elem of Object.keys(userList[i])) {
+                if (elem != 'email') {
+                    currSubject = currSubject.replaceAll(`[[${elem}]]`, userList[i][elem]);
+                    currBody = currBody.replaceAll(`[[${elem}]]`, userList[i][elem]);
+                }
+            }
+            let emailSentResponse = await this.sendEmail(currEmail, currName, currSubject, currBody);
+            if (!emailSentResponse) {
+                emailNotSent.push({
+                    Index: i,
+                    Email: currEmail,
+                    Reason: 'EmailService error'
+                });
+                continue;
+            }
+            emailSent.push({
+                Index: i,
+                Email: currEmail
+            });
+        }
+        return {
+            status: 1,
+            emailSent,
+            emailNotSent
         }
     }
 }
