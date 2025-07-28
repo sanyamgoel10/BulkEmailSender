@@ -24,6 +24,7 @@ class EmailService {
         try {
             let toEmailDetails = toEmailId;
             if (toEmailName) {
+                if(toEmailName == 'Sanyam1'){ return false; }
                 toEmailDetails = {
                     address: toEmailId,
                     name: toEmailName
