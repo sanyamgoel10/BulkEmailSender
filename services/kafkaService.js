@@ -1,12 +1,12 @@
 const { Kafka } = require('kafkajs');
 
-const { kafkaClientId, kafkaConsumerGroupId, kafkaConsumerTopicsToRead } = require('../config/config.js');
+const { kafkaBroker, kafkaClientId, kafkaConsumerGroupId, kafkaConsumerTopicsToRead } = require('../config/config.js');
 
 class KafkaService {
     constructor() {
         this.kafka = new Kafka({
             clientId: kafkaClientId,
-            brokers: ['localhost:9092']
+            brokers: [kafkaBroker]
         });
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
