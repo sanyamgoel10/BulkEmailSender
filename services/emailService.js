@@ -225,6 +225,74 @@ class EmailService {
         };
     }
 
+    async parseJsonOfArraysAndSendEmailsInBatch(emailSubject, emailBody, userList) {
+        let emailSent = [];
+        let emailNotSent = [];
+
+        let sendEmailReq = [];
+        let sendEmailReqMeta = [];
+
+        if (!UtilService.checkValidArray(userList.email)) {
+            return {
+                status: 0,
+                msg: 'Invalid email in ReceiverDetails'
+            };
+        }
+
+        for (let elem of Object.keys(userList)) {
+            if (!UtilService.checkValidArray(userList[elem]) || userList[elem].length != userList.email.length) {
+                return {
+                    status: 0,
+                    msg: 'Invalid values in ReceiverDetails'
+                };
+            }
+        }
+
+        for (let i = 0; i < userList.email.length; i++) {
+            let currEmail = userList.email[i];
+            let currSubject = emailSubject;
+            let currBody = emailBody;
+            if (!UtilService.checkValidEmailId(currEmail)) {
+                emailNotSent.push({
+                    Index: i,
+                    Email: currEmail,
+                    Reason: 'Invalid EmailId'
+                });
+                continue;
+            }
+            for (let elem of Object.keys(userList)) {
+                if (elem != 'email') {
+                    currSubject = currSubject.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                    currBody = currBody.replaceAll(`[[${elem}]]`, userList[elem][i]);
+                }
+            }
+            sendEmailReq.push(this.sendEmail(currEmail, (UtilService.checkValidArray(userList.name) ? userList.name[i] : false), currSubject, currBody));
+            sendEmailReqMeta.push(currEmail);
+        }
+
+        return Promise.allSettled(sendEmailReq).then((responses) => {
+            responses.forEach((response, index) => {
+                if (response.status == 'rejected') {
+                    emailNotSent.push({
+                        Index: index,
+                        Email: sendEmailReqMeta[index],
+                        Reason: 'EmailService error'
+                    });
+                    return;
+                }
+                emailSent.push({
+                    Index: index,
+                    Email: sendEmailReqMeta[index]
+                });
+            });
+            return {
+                status: 1,
+                emailSent,
+                emailNotSent
+            };
+        });
+    }
+
     async parseArrayOfJsonsAndSendEmailsSequentially(emailSubject, emailBody, userList) {
         let emailSent = [];
         let emailNotSent = [];
