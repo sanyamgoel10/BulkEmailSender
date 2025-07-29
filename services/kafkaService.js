@@ -1,14 +1,16 @@
 const { Kafka } = require('kafkajs');
 
+const { kafkaClientId, kafkaConsumerGroupId, kafkaConsumerTopicsToRead } = require('../config/config.js');
+
 class KafkaService {
     constructor() {
         this.kafka = new Kafka({
-            clientId: 'bulk-email-sender-service',
+            clientId: kafkaClientId,
             brokers: ['localhost:9092']
         });
         this.producer = this.kafka.producer();
         this.consumer = this.kafka.consumer({
-            groupId: 'test-consumer-group-sg'
+            groupId: kafkaConsumerGroupId
         });
         this.isProducerConnected = false;
         this.isConsumerConnected = false;
@@ -48,20 +50,21 @@ class KafkaService {
     }
 
     async runConsumer(topic) {
-        await this.connectConsumer();
+        if(kafkaConsumerTopicsToRead.includes(topic)){
+            await this.connectConsumer();
 
-        await this.consumer.subscribe({
-            topic: topic,
-            fromBeginning: true
-        });
+            await this.consumer.subscribe({
+                topic: topic,
+                fromBeginning: true
+            });
 
-        await this.consumer.run({
-            eachMessage: async ({ topic, partition, message }) => {
-                const value = message.value.toString();
-                console.log("Final Message in Consumer: ", value);
-            },
-        });
-
+            await this.consumer.run({
+                eachMessage: async ({ topic, partition, message }) => {
+                    const value = message.value.toString();
+                    console.log("Final Message in Consumer: ", value);
+                },
+            });
+        }
     }
 
     async disconnect() {

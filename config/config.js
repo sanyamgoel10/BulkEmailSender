@@ -7,6 +7,10 @@ module.exports = {
     senderName: process.env.SENDER_NAME,
     senderPassword: process.env.SENDER_PASSWORD,
 
+    kafkaClientId: 'bulk-email-sender-service',
+    kafkaConsumerGroupId: 'test-consumer-group-sg',
+    kafkaConsumerTopicsToRead: ['send-bulk-email-topic'],
+
     emailTemplateList: {
         'sample_email_template_id': {
             subject: `Sample email subject for [[name]]`,
