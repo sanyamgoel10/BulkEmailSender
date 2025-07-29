@@ -1,6 +1,7 @@
 const { emailTemplateList } = require('../config/config.js');
 const UtilService = require('../services/utilService.js');
 const EmailService = require('../services/emailService.js');
+const KafkaService = require('../services/kafkaService.js');
 
 class EmailController {
     async sendMultipleEmails(req, res) {
@@ -90,6 +91,30 @@ class EmailController {
             })
         } catch (error) {
             console.log('Error in EmailController.readExcelFile: ', error);
+            return res.status(500).json({
+                status: 0,
+                msg: 'Server Error'
+            });
+        }
+    }
+
+    async sendMultipleEmailsKafka(req, res) {
+        try {
+            if (!UtilService.checkValidObject(req.body)) {
+                return res.status(400).json({
+                    status: 0,
+                    msg: 'Invalid body'
+                });
+            }
+            
+            await KafkaService.sendMessage('send-email-topic', JSON.stringify(req.body));
+            
+            return res.status(200).json({
+                status: 1,
+                msg: 'Send email packet sent to kafka'
+            });
+        } catch (error) {
+            console.log('Error in EmailController.sendMultipleEmailsKafka: ', error);
             return res.status(500).json({
                 status: 0,
                 msg: 'Server Error'

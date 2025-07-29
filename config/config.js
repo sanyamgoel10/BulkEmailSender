@@ -10,7 +10,7 @@ module.exports = {
     kafkaBroker: 'localhost:9092',
     kafkaClientId: 'bulk-email-sender-service',
     kafkaConsumerGroupId: 'test-consumer-group-sg',
-    kafkaConsumerTopicsToRead: ['send-bulk-email-topic'],
+    kafkaConsumerTopicsToRead: ['send-bulk-email-topic', 'send-email-topic'],
 
     emailTemplateList: {
         'sample_email_template_id': {
