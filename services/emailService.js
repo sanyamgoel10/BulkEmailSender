@@ -24,7 +24,6 @@ class EmailService {
         try {
             let toEmailDetails = toEmailId;
             if (toEmailName) {
-                if(toEmailName == 'Sanyam1'){ return false; }
                 toEmailDetails = {
                     address: toEmailId,
                     name: toEmailName
@@ -53,14 +52,58 @@ class EmailService {
 
             const mailInfo = await this.transporter.sendMail(options);
 
-            console.log("Message sent: %s", mailInfo.messageId);
-            // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(mailInfo));
+            console.log("Message sent: ", mailInfo.messageId);
+            // console.log("Preview URL: ", nodemailer.getTestMessageUrl(mailInfo));
 
             return true;
         } catch (error) {
             console.log('Error in EmailService.sendEmail: ', error);
             return false;
         }
+    }
+
+    async sendEmailPromise(toEmailId, toEmailName = false, subject, body, toCc = false, toBcc = false, attachmentFiles = false) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let toEmailDetails = toEmailId;
+                if (toEmailName) {
+                    toEmailDetails = {
+                        address: toEmailId,
+                        name: toEmailName
+                    }
+                }
+                let options = {
+                    from: `"${senderName}" <${senderEmail}>`,
+                    to: toEmailDetails,
+                    subject: subject,
+                    html: body,
+                };
+                if (UtilService.checkValidArray(toCc) && toCc.length > 0) {
+                    options.cc = toCc;
+                }
+                if (UtilService.checkValidArray(toBcc) && toBcc.length > 0) {
+                    options.bcc = toBcc;
+                }
+                if (attachmentFiles && UtilService.checkValidArray(attachmentFiles) && attachmentFiles.length > 0) {
+                    options.attachments = [];
+                    attachmentFiles.forEach((attachment) => {
+                        if (UtilService.checkValidObject(attachment)) {
+                            options.attachments.push(attachment);
+                        }
+                    });
+                }
+
+                const mailInfo = await this.transporter.sendMail(options);
+
+                console.log("Message sent: %s", mailInfo.messageId);
+                // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(mailInfo));
+
+                resolve();
+            } catch (error) {
+                console.log('Error in EmailService.sendEmail: ', error);
+                reject();
+            }
+        });
     }
 
     async readExcelFileAndSendEmail() {
@@ -122,7 +165,7 @@ class EmailService {
         }
     }
 
-    async parseJsonOfArraysAndSendEmailsSync(emailSubject, emailBody, userList) {
+    async parseJsonOfArraysAndSendEmailsSequentially(emailSubject, emailBody, userList) {
         let emailSent = [];
         let emailNotSent = [];
 
@@ -182,7 +225,7 @@ class EmailService {
         };
     }
 
-    async parseArrayOfJsonsAndSendEmailsSync(emailSubject, emailBody, userList) {
+    async parseArrayOfJsonsAndSendEmailsSequentially(emailSubject, emailBody, userList) {
         let emailSent = [];
         let emailNotSent = [];
         for (let i = 0; i < userList.length; i++) {
@@ -223,6 +266,59 @@ class EmailService {
             emailSent,
             emailNotSent
         }
+    }
+
+    async parseArrayOfJsonsAndSendEmailsInBatch(emailSubject, emailBody, userList) {
+        let emailSent = [];
+        let emailNotSent = [];
+
+        let sendEmailReq = [];
+        let sendEmailReqMeta = [];
+
+        for (let i = 0; i < userList.length; i++) {
+            let currObj = userList[i];
+            if (!UtilService.checkValidEmailId(currObj.email)) {
+                emailNotSent.push({
+                    Index: i,
+                    Reason: 'Invalid email in ReceiverDetails'
+                });
+                continue;
+            }
+            let currEmail = userList[i].email;
+            let currSubject = emailSubject;
+            let currBody = emailBody;
+            let currName = UtilService.checkValidString(userList[i].name) ? userList[i].name : false;
+            for (let elem of Object.keys(userList[i])) {
+                if (elem != 'email') {
+                    currSubject = currSubject.replaceAll(`[[${elem}]]`, userList[i][elem]);
+                    currBody = currBody.replaceAll(`[[${elem}]]`, userList[i][elem]);
+                }
+            }
+            sendEmailReq.push(this.sendEmailPromise(currEmail, currName, currSubject, currBody));
+            sendEmailReqMeta.push(currEmail);
+        }
+
+        return Promise.allSettled(sendEmailReq).then((responses) => {
+            responses.forEach((response, index) => {
+                if (response.status == 'rejected') {
+                    emailNotSent.push({
+                        Index: index,
+                        Email: sendEmailReqMeta[index],
+                        Reason: 'EmailService error'
+                    });
+                    return;
+                }
+                emailSent.push({
+                    Index: index,
+                    Email: sendEmailReqMeta[index]
+                });
+            });
+            return {
+                status: 1,
+                emailSent,
+                emailNotSent
+            }
+        });
     }
 }
 

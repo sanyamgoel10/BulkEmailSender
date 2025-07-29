@@ -32,14 +32,19 @@ class EmailController {
             let emailSent = [], emailNotSent = [];
 
             if (UtilService.checkValidObject(req.body.ReceiverDetails)) {
-                let respJson = await EmailService.parseJsonOfArraysAndSendEmailsSync(emailSubject, emailBody, req.body.ReceiverDetails);
+                let respJson = await EmailService.parseJsonOfArraysAndSendEmailsSequentially(emailSubject, emailBody, req.body.ReceiverDetails);
                 if (!respJson.status) {
                     return res.status(400).json(respJson);
                 }
                 emailSent = respJson.emailSent;
                 emailNotSent = respJson.emailNotSent;
             } else if (UtilService.checkValidArray(req.body.ReceiverDetails) && req.body.ReceiverDetails.length > 0) {
-                let respJson = await EmailService.parseArrayOfJsonsAndSendEmailsSync(emailSubject, emailBody, req.body.ReceiverDetails);
+                let respJson;
+                if (UtilService.checkValidString(req.body.Method) && (req.body.Method).toLowerCase() == 'batch') {
+                    respJson = await EmailService.parseArrayOfJsonsAndSendEmailsInBatch(emailSubject, emailBody, req.body.ReceiverDetails)
+                } else {
+                    respJson = await EmailService.parseArrayOfJsonsAndSendEmailsSequentially(emailSubject, emailBody, req.body.ReceiverDetails)
+                }
                 if (!respJson.status) {
                     return res.status(400).json(respJson);
                 }
