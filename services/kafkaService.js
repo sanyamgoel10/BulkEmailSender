@@ -1,6 +1,7 @@
 const { Kafka } = require('kafkajs');
 
 const { kafkaBroker, kafkaClientId, kafkaConsumerGroupId, kafkaConsumerTopicsToRead } = require('../config/config.js');
+const EmailService = require('./emailService.js');
 
 class KafkaService {
     constructor() {
@@ -62,6 +63,12 @@ class KafkaService {
                 eachMessage: async ({ topic, partition, message }) => {
                     const value = message.value.toString();
                     console.log("Final Message in Consumer: ", value);
+
+                    if(topic == 'send-email-topic'){
+                        // await EmailService.sendEmailThroughKafkaConsumer(JSON.parse(value));
+                    }else{
+                        console.log("Invalid Topic");
+                    }
                 },
             });
         }
