@@ -1,4 +1,4 @@
-const { senderEmail, senderName, senderPassword, emailTemplateList } = require('../config/config.js');
+const { senderEmail, senderName, senderPassword, emailTemplateList, adminEmailId, adminName } = require('../config/config.js');
 
 const nodemailer = require('nodemailer');
 const xlsx = require('xlsx');
