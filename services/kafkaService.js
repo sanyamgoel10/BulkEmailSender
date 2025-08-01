@@ -62,8 +62,7 @@ class KafkaService {
             await this.consumer.run({
                 eachMessage: async ({ topic, partition, message }) => {
                     const value = message.value.toString();
-                    console.log("Final Message in Consumer: ", value);
-
+                    console.log(`Message in ${topic} consumer: `, value);
                     if(topic == 'send-email-topic'){
                         await EmailService.sendEmailThroughKafkaConsumer(JSON.parse(value));
                     }else{
