@@ -7,6 +7,9 @@ module.exports = {
     senderName: process.env.SENDER_NAME,
     senderPassword: process.env.SENDER_PASSWORD,
 
+    adminEmailId: process.env.ADMIN_EMAIL,
+    adminName: process.env.ADMIN_NAME,
+
     kafkaBroker: 'localhost:9092',
     kafkaClientId: 'bulk-email-sender-service',
     kafkaConsumerGroupId: 'test-consumer-group-sg',
