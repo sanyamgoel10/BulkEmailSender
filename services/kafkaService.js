@@ -65,7 +65,7 @@ class KafkaService {
                     console.log("Final Message in Consumer: ", value);
 
                     if(topic == 'send-email-topic'){
-                        // await EmailService.sendEmailThroughKafkaConsumer(JSON.parse(value));
+                        await EmailService.sendEmailThroughKafkaConsumer(JSON.parse(value));
                     }else{
                         console.log("Invalid Topic");
                     }

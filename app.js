@@ -29,5 +29,5 @@ app.listen(config.port, async () => {
     //     i++;
     // }, 10000);
 
-    // await KafkaService.runConsumer(topicName);
+    await KafkaService.runConsumer('send-email-topic');
 });
