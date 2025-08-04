@@ -61,7 +61,7 @@ class KafkaService {
 
             await this.consumer.run({
                 eachMessage: async ({ topic, partition, message }) => {
-                    const value = message.value.toString();
+                    let value = message.value.toString();
                     console.log(`Message in ${topic} consumer: `, value);
                     try{
                         value = JSON.parse(value);
