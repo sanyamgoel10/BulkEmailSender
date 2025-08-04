@@ -388,6 +388,98 @@ class EmailService {
             }
         });
     }
+
+    async sendEmailThroughKafkaConsumer(reqBody){
+        console.log("reqBody: ", reqBody);
+        // if (!UtilService.checkValidObject(reqBody)) {
+        //     await this.sendEmail(adminEmailId, adminName, 'Error in EmailService.sendEmailThroughKafkaConsumer', `
+        //         ERROR in Bulk Email Sender
+        //         <br><br>
+        //         Service Name: EmailService.sendEmailThroughKafkaConsumer
+        //         <br>
+        //         Reason: Invalid Body
+        //         <br>
+        //         Request Body: ${reqBody}
+        //     `);
+        //     return;
+        // }
+        // if (!UtilService.checkValidString(reqBody.TemplateId)) {
+        //     await this.sendEmail(adminEmailId, adminName, 'Error in EmailService.sendEmailThroughKafkaConsumer', `
+        //         ERROR in Bulk Email Sender
+        //         <br><br>
+        //         Service Name: EmailService.sendEmailThroughKafkaConsumer
+        //         <br>
+        //         Reason: Invalid TemplateId
+        //         <br>
+        //         Request Body: ${reqBody}
+        //     `);
+        //     return;
+        // }
+        // if (!emailTemplateList[reqBody.TemplateId] || !UtilService.checkValidObject(emailTemplateList[reqBody.TemplateId]) || !UtilService.checkValidString(emailTemplateList[reqBody.TemplateId].subject) || !UtilService.checkValidString(emailTemplateList[reqBody.TemplateId].body)) {
+        //     await this.sendEmail(adminEmailId, adminName, 'Error in EmailService.sendEmailThroughKafkaConsumer', `
+        //         ERROR in Bulk Email Sender
+        //         <br><br>
+        //         Service Name: EmailService.sendEmailThroughKafkaConsumer
+        //         <br>
+        //         Reason: TemplateId not found
+        //         <br>
+        //         Request Body: ${reqBody}
+        //     `);
+        //     return;
+        // }
+        // const emailSubject = emailTemplateList[reqBody.TemplateId].subject;
+        // const emailBody = emailTemplateList[reqBody.TemplateId].body;
+        // let emailSent = [], emailNotSent = [];
+        // if (UtilService.checkValidObject(reqBody.ReceiverDetails)) {
+        //     let respJson;
+        //     if (UtilService.checkValidString(reqBody.Method) && (reqBody.Method).toLowerCase() == 'batch') {
+        //         respJson = await this.parseJsonOfArraysAndSendEmailsInBatch(emailSubject, emailBody, reqBody.ReceiverDetails);
+        //     } else {
+        //         respJson = await this.parseJsonOfArraysAndSendEmailsSequentially(emailSubject, emailBody, reqBody.ReceiverDetails);
+        //     }
+        //     if (!respJson.status) {
+        //         return respJson;
+        //     }
+        //     emailSent = respJson.emailSent;
+        //     emailNotSent = respJson.emailNotSent;
+        // } else if (UtilService.checkValidArray(reqBody.ReceiverDetails) && reqBody.ReceiverDetails.length > 0) {
+        //     let respJson;
+        //     if (UtilService.checkValidString(reqBody.Method) && (reqBody.Method).toLowerCase() == 'batch') {
+        //         respJson = await this.parseArrayOfJsonsAndSendEmailsInBatch(emailSubject, emailBody, reqBody.ReceiverDetails)
+        //     } else {
+        //         respJson = await this.parseArrayOfJsonsAndSendEmailsSequentially(emailSubject, emailBody, reqBody.ReceiverDetails)
+        //     }
+        //     if (!respJson.status) {
+        //         return respJson;
+        //     }
+        //     emailSent = respJson.emailSent;
+        //     emailNotSent = respJson.emailNotSent;
+        // } else {
+        //     await this.sendEmail(adminEmailId, adminName, 'Error in EmailService.sendEmailThroughKafkaConsumer', `
+        //         ERROR in Bulk Email Sender
+        //         <br><br>
+        //         Service Name: EmailService.sendEmailThroughKafkaConsumer
+        //         <br>
+        //         Reason: Invalid ReceiverDetails
+        //         <br>
+        //         Request Body: ${reqBody}
+        //     `);
+        //     return;
+        // }
+
+        // await this.sendEmail(adminEmailId, adminName, `Bulk Email Sender Report`, `
+        //     Bulk Email Sender Report:-
+        //     <br><br>
+        //     Success Count: ${emailSent.length}
+        //     <br>
+        //     Failure Count: ${emailNotSent.length}
+        //     <br>
+        //     Success Email IDs: ${emailSent}
+        //     <br>
+        //     Failed Email IDs: ${emailNotSent}
+        // `);
+        // return;
+    }
 }
 
 module.exports = new EmailService();
