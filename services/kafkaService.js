@@ -63,8 +63,13 @@ class KafkaService {
                 eachMessage: async ({ topic, partition, message }) => {
                     const value = message.value.toString();
                     console.log(`Message in ${topic} consumer: `, value);
+                    try{
+                        value = JSON.parse(value);
+                    }catch(e){
+                        value = value;
+                    }
                     if(topic == 'send-email-topic'){
-                        await EmailService.sendEmailThroughKafkaConsumer(JSON.parse(value));
+                        await EmailService.sendEmailThroughKafkaConsumer(value);
                     }else{
                         console.log("Invalid Topic");
                     }
